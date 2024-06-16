@@ -2,15 +2,11 @@
 
 pkgbase='systemd'
 pkgname='nosystemd-boot'
-_tag='255.6'
-# Upstream versioning is incompatible with pacman's version comparisons so we
-# replace tildes with the empty string to make sure pacman's version comparing
-# does the right thing for rc versions:
-# ➜ vercmp 255~rc1 255
-# 1
-# ➜ vercmp 255rc1 255
-# -1
-pkgver="${_tag/~/}"
+_tag='256'
+# Upstream versioning is incompatible with pacman's version comparisons, one
+# way or another. So we replace dashes and tildes with the empty string to
+# make sure pacman's version comparing does the right thing for rc versions:
+pkgver="${_tag/[-~]/}"
 pkgrel=1
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
@@ -49,8 +45,8 @@ source=("git+https://github.com/systemd/systemd-stable#tag=v${_tag}?signed"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-tmpfiles.hook"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-udev-reload.hook"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-update.hook")
-sha512sums=('c1de1eb0d0ef6d8da81a105cdfcb86634bed6f46ab1038de9ab786fd85f59524e7eb30fe1d02dbf2c3b3a29dc66d04a102b2274a09ad3d2c18953c380099aa0e'
-            'd430427987309483c99062adb02741d25239ba5fbb97053ef817c0c5a0a935328af9c8b651de2b119b0e851dcf6623f01343859735ff81d7013ab0133e67c7ea'
+sha512sums=('0a82b5708d1025dbe12a722e3b7e946c5136a17ea2d9b73afba02da474873b3373cd7c1c4eff8bd612c2b16321f31a6109e3c34e548e48ae88fa5bb3fab00383'
+            '0a82b5708d1025dbe12a722e3b7e946c5136a17ea2d9b73afba02da474873b3373cd7c1c4eff8bd612c2b16321f31a6109e3c34e548e48ae88fa5bb3fab00383'
             '3ccf783c28f7a1c857120abac4002ca91ae1f92205dcd5a84aff515d57e706a3f9240d75a0a67cff5085716885e06e62597baa86897f298662ec36a940cf410e'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
@@ -95,8 +91,8 @@ _reverts=(
 _efiarch=x64
 _targets=(
     bootctl
-    man/bootctl.1
-    man/kernel-install.8
+#    man/bootctl.1
+#    man/kernel-install.8
     "src/boot/efi/linux$_efiarch."{efi,elf}".stub"
     "src/boot/efi/systemd-boot$_efiarch.efi"
     "src/shared/libsystemd-shared-$_tag-$pkgrel.so"
@@ -141,22 +137,21 @@ build() {
 
   local _meson_options=(
     -Dversion-tag="${_meson_version}-arch"
-    # We use the version without tildes as the shared library tag because
-    # pacman looks at the shared library version.
-    -Dshared-lib-tag="${_meson_version/~/}"
+
+    -Dshared-lib-tag="${_meson_version}"
     -Dmode="${_meson_mode}"
 
-    -Dapparmor=false
-    -Dbootloader=true
-    -Dxenctrl=false
-    -Dbpf-framework=true
+    -Dapparmor=disabled
+    -Dbootloader=enabled
+    -Dxenctrl=disabled
+    -Dbpf-framework=enabled
     -Dima=false
     -Dinstall-tests=true
-    -Dlibidn2=true
-    -Dlz4=true
-    -Dman=true
+    -Dlibidn2=enabled
+    -Dlz4=enabled
+    -Dman=enabled
     -Dnscd=false
-    -Dselinux=false
+    -Dselinux=disabled
 
     # We disable DNSSEC by default, it still causes trouble:
     # https://github.com/systemd/systemd/issues/10579
@@ -194,10 +189,6 @@ check() {
 
 package() {
   install -Dm755 build/bootctl "$pkgdir/usr/bin/bootctl"
-
-  install -d "$pkgdir/usr/share/man"{1,8}
-  cp build/man/bootctl.1 "$pkgdir/usr/share/man1"
-  cp build/man/kernel-install.8 "$pkgdir/usr/share/man8"
 
   install -d "$pkgdir/usr/lib/systemd/boot/efi"
   cp build/src/boot/efi/{linux${_efiarch}.{efi,elf}.stub,systemd-boot${_efiarch}.efi}  "$pkgdir/usr/lib/systemd/boot/efi"
