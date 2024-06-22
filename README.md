@@ -1,7 +1,7 @@
 # nosystemd-boot-artix
 systemd-boot for Artix Linux
 
-You need to use --skippgpcheck with makepkg or add the systemd PGP keys to build this. This only packages the following files:
+This only packages the following files:
 
 - /usr/bin/bootctl
 - /usr/bin/kernel-install
