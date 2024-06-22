@@ -2,7 +2,7 @@
 
 pkgbase='systemd'
 pkgname='nosystemd-boot'
-_tag='256'
+_tag='256.1'
 # Upstream versioning is incompatible with pacman's version comparisons, one
 # way or another. So we replace dashes and tildes with the empty string to
 # make sure pacman's version comparing does the right thing for rc versions:
@@ -24,8 +24,7 @@ validpgpkeys=('63CDA1E5D3FC22B998D20DD6327F26951A015CC4'  # Lennart Poettering <
               'A9EA9081724FFAE0484C35A1A81CEA22BC8C7E2E'  # Luca Boccassi <luca.boccassi@gmail.com>
               '9A774DB5DB996C154EBBFBFDA0099A18E29326E1'  # Yu Watanabe <watanabe.yu+github@gmail.com>
               '5C251B5FC54EB2F80F407AAAC54CA336CFEB557E') # Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
-source=("git+https://github.com/systemd/systemd-stable#tag=v${_tag}?signed"
-        "git+https://github.com/systemd/systemd#tag=v${_tag%.*}?signed"
+source=("git+https://github.com/systemd/systemd#tag=v${_tag}?signed"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/0001-Use-Arch-Linux-device-access-groups.patch"
         # bootloader files
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/arch.conf"
@@ -45,8 +44,7 @@ source=("git+https://github.com/systemd/systemd-stable#tag=v${_tag}?signed"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-tmpfiles.hook"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-udev-reload.hook"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-update.hook")
-sha512sums=('0a82b5708d1025dbe12a722e3b7e946c5136a17ea2d9b73afba02da474873b3373cd7c1c4eff8bd612c2b16321f31a6109e3c34e548e48ae88fa5bb3fab00383'
-            '0a82b5708d1025dbe12a722e3b7e946c5136a17ea2d9b73afba02da474873b3373cd7c1c4eff8bd612c2b16321f31a6109e3c34e548e48ae88fa5bb3fab00383'
+sha512sums=('1ba38dd45cd910c7a2b4c7f23f982c5b0e5b13cd5874571ebc9b609ff85c058cecdb61019141ef2010fd4882c3ffc5a13a2b0d6370db4067ad90c28b83de6760'
             '3ccf783c28f7a1c857120abac4002ca91ae1f92205dcd5a84aff515d57e706a3f9240d75a0a67cff5085716885e06e62597baa86897f298662ec36a940cf410e'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
@@ -99,7 +97,7 @@ _targets=(
   )
 
 prepare() {
-  cd "$pkgbase-stable"
+  cd "${pkgbase}"
 
   # add upstream repository for cherry-picking
   git remote add -f upstream ../systemd
@@ -178,7 +176,7 @@ build() {
     -Dsbat-distro-url="https://archlinux.org/packages/core/x86_64/${pkgname}/"
   )
 
-  arch-meson "$pkgbase-stable" build "${_meson_options[@]}" $MESON_EXTRA_CONFIGURE_OPTIONS
+  arch-meson "${pkgbase}" build "${_meson_options[@]}" $MESON_EXTRA_CONFIGURE_OPTIONS
 
   meson compile -C build "${_meson_compile[@]}"
 }
