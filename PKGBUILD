@@ -1,7 +1,8 @@
+# Maintainer: Neko <demeruza@yahoo.fr>
 # Maintainer: Christian Hesse <mail@eworm.de>
 
-pkgbase='systemd'
-pkgname='nosystemd-boot'
+pkgbase='nosystemd-boot-artix'
+pkgname='nosystemd-boot-artix'
 _tag='256.1'
 # Upstream versioning is incompatible with pacman's version comparisons, one
 # way or another. So we replace dashes and tildes with the empty string to
@@ -10,7 +11,7 @@ pkgver="${_tag/[-~]/}"
 pkgrel=1
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
-url='https://www.github.com/systemd/systemd'
+url='https://www.github.com/Demelza/nosystemd-boot-artix'
 makedepends=('acl' 'cryptsetup' 'docbook-xsl' 'gperf' 'lz4' 'xz' 'pam' 'libelf'
              'intltool' 'iptables' 'kmod' 'libcap' 'libidn2' 'libgcrypt'
              'libmicrohttpd' 'libxcrypt' 'libxslt' 'util-linux' 'linux-api-headers'
