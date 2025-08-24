@@ -3,12 +3,12 @@
 
 pkgbase='systemd'
 pkgname='nosystemd-boot-artix'
-_tag='257.1'
+_tag='257.8'
 # Upstream versioning is incompatible with pacman's version comparisons, one
 # way or another. So we replace dashes and tildes with the empty string to
 # make sure pacman's version comparing does the right thing for rc versions:
-pkgver="${_tag/[-~]/}"
-pkgrel=1
+pkgver=257.8
+pkgrel=2
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
@@ -46,12 +46,12 @@ source=("git+https://github.com/systemd/systemd#tag=v${_tag}?signed"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-tmpfiles.hook"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-udev-reload.hook"
         "https://gitlab.archlinux.org/archlinux/packaging/packages/systemd/-/raw/main/30-systemd-update.hook")
-sha512sums=('53b14cfadf301a44fdfcaa2fe4b9d2371c85581544093b88e5afcee4e45c5bd8668aaae9dd6663363c24f3b610f9b0d6eb61f00df71d588bce8f6264424203e4'
+sha512sums=('ff06b4a7854b67e36079fd2ba4c1fc9e772b8227606521cae641eb6633c872fa0f528e0a9c0b13b3b47741243b1735c7500261a8f7c714b5383cd89746d2181f'
             '78065bde708118b7d6e4ed492e096c763e4679a1c54bd98750d5d609d8cc2f1373023f308880f14fc923ae7f9fea34824917ef884c0f996b1f43d08ef022c0fb'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'
-            'b90c99d768dc2a4f020ba854edf45ccf1b86a09d2f66e475de21fe589ff7e32c33ef4aa0876d7f1864491488fd7edb2682fc0d68e83a6d4890a0778dc2d6fe19'
+            '32580b82e97573d3e499821e2ce415ff134c0ec52c9b44a3c0862c4007d347f55636d6afac3dfc6831a9b384c7448075bdf3a12f369b4d8b62b24dfdb9c8a76a'
             '81baa1ae439b0f4d1f09371a82c02db06a97a4fc35545fc2654f7905b4422fc8cf085f70304919a4323f39e662df1e05aa8d977d1dde73507527abe3072c386b'
             '299dcc7094ce53474521356647bdd2fb069731c08d14a872a425412fcd72da840727a23664b12d95465bf313e8e8297da31259508d1c62cc2dcea596160e21c5'
             '0d6bc3d928cfafe4e4e0bc04dbb95c5d2b078573e4f9e0576e7f53a8fab08a7077202f575d74a3960248c4904b5f7f0661bf17dbe163c524ab51dd30e3cb80f7'
@@ -66,26 +66,22 @@ sha512sums=('53b14cfadf301a44fdfcaa2fe4b9d2371c85581544093b88e5afcee4e45c5bd8668
             '825b9dd0167c072ba62cabe0677e7cd20f2b4b850328022540f122689d8b25315005fa98ce867cf6e7460b2b26df16b88bb3b5c9ebf721746dce4e2271af7b97')
 
 _meson_version="${pkgver}-${pkgrel}"
-_meson_vcs_tag='false'
-_meson_mode='release'
-_meson_compile=()
-_meson_install=()
+_systemd_src_dir="${pkgbase}"
 
 if ((_systemd_UPSTREAM)); then
   _meson_version="${pkgver}"
-  _meson_mode='developer'
-  pkgname+=('systemd-tests')
-  if ((_systemd_QUIET)); then
-    _meson_install=('--quiet')
-  else
-    _meson_compile=('--verbose')
-  fi
+fi
+if [ -f /.build/build.dist ] && [ -d /usr/src/packages/SOURCES ] &&  [ -d /usr/src/packages/BUILD ] &&  [ -d /usr/src/packages/OTHER ]; then
+  source[0]="$(find . -name "${pkgbase}-${pkgver}.tar.*" -print -quit)"
+  sha512sums[0]='SKIP'
+  _systemd_src_dir="${pkgbase}-${pkgver}"
 fi
 
 _backports=(
 )
 
 _reverts=(
+'12a455db368340733ac9a701d9a5864b612d3408'
 )
 
 _efiarch=x64
@@ -99,9 +95,14 @@ _targets=(
   )
 
 prepare() {
-  cd "${pkgbase}"
+  cd "${_systemd_src_dir}"
 
-  # add upstream repository for cherry-picking
+  patch -Np1 -i ../0001-Use-Arch-Linux-device-access-groups.patch
+
+  if ! git status >/dev/null 2>&1; then
+    return
+  fi
+
   git remote add -f upstream ../systemd
 
   local _c _l
@@ -115,9 +116,6 @@ prepare() {
     git log --oneline "${_l}" "${_c}"
     git revert --mainline 1 --no-commit "${_c}"
   done
-
-  # Replace cdrom/dialout/tape groups with optical/uucp/storage
-  patch -Np1 -i ../0001-Use-Arch-Linux-device-access-groups.patch
 }
 
 build() {
@@ -137,9 +135,9 @@ build() {
 
   local _meson_options=(
     -Dversion-tag="${_meson_version}-arch"
-    -Dvcs-tag="${_meson_vcs_tag}"
+    -Dvcs-tag=false
     -Dshared-lib-tag="${_meson_version}"
-    -Dmode="${_meson_mode}"
+    -Dmode=release
 
     -Dapparmor=disabled
     -Dbootloader=enabled
@@ -150,7 +148,6 @@ build() {
     -Dlibidn2=enabled
     -Dlz4=enabled
     -Dman=enabled
-    -Dnscd=false
     -Dselinux=disabled
     -Dsshdprivsepdir=/usr/share/empty.sshd
 
@@ -178,9 +175,9 @@ build() {
     -Dsbat-distro-url="https://archlinux.org/packages/core/x86_64/${pkgname}/"
   )
 
-  arch-meson "${pkgbase}" build "${_meson_options[@]}" $MESON_EXTRA_CONFIGURE_OPTIONS
+  arch-meson "${_systemd_src_dir}" build "${_meson_options[@]}" $MESON_EXTRA_CONFIGURE_OPTIONS
 
-  meson compile -C build "${_meson_compile[@]}"
+  meson compile -C build
 }
 
 check() {
